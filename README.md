@@ -4,4 +4,4 @@ Please consider not all function work correctly and if the accuracy is as less a
 
 
 Usage : 
-gcc whatever.c -Dapprox
+gcc whatever.c -Dapprox -Dncp
