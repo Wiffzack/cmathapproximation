@@ -4,7 +4,7 @@ A collection of math function approximation from around the web .
 
 
 Usage : 
-gcc whatever.c -Dapprox -Dncp
+>gcc whatever.c -Dapprox -Dncp
 
 
 Some Flags recommendation(for Intel CPU):
