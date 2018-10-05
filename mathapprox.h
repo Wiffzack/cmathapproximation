@@ -153,8 +153,8 @@ float rsqrta(float ) __attribute__ ((hot)) __attribute__ ((__target__ ("default"
 //float sincosa(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 
 
-#pragma GCC push_options
-#pragma GCC optimize ("-march=core-avx-i -lm -DHAVE_ACML -L/opt/sse -L/opt/OpenBLAS/lib/ -L/usr/local/lib/ -lmingw32 -mf16c -latlas -lfftw3 -llapack -lblas -lOpenCL -lcufft_static -lcublas_static -lclblast -lacml_mv -lamac64o -fopenmp -I/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/include -L/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64 -lmkl_core -lmkl_tbb_thread -lmkl_intel_ilp64 -lstdc++ -lpthread -O1 -funroll-loops -flto -ftree-vectorize -funsafe-math-optimizations -mveclibabi=svml -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=1202 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+//#pragma GCC push_options
+//#pragma GCC optimize ("-march=core-avx-i -lm -DHAVE_ACML -L/opt/sse -L/opt/OpenBLAS/lib/ -L/usr/local/lib/ -lmingw32 -mf16c -latlas -lfftw3 -llapack -lblas -lOpenCL -lcufft_static -lcublas_static -lclblast -lacml_mv -lamac64o -fopenmp -I/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/include -L/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64 -lmkl_core -lmkl_tbb_thread -lmkl_intel_ilp64 -lstdc++ -lpthread -O1 -funroll-loops -flto -ftree-vectorize -funsafe-math-optimizations -mveclibabi=svml -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=1202 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
 static const double Zero[] = {0.0, -0.0,};
 #define packed_double(x) {(x), (x)}
@@ -860,7 +860,7 @@ double cbrt2(double x)
 //float expf(float x) __attribute__ ((alias("fm_expf"))); 
 //float exp10f(float x) __attribute__ ((alias("fm_exp10f")));
 
-#pragma GCC pop_options
+//#pragma GCC pop_options
 #endif
 
 
