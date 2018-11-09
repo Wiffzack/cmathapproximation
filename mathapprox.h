@@ -1,10 +1,13 @@
-//# sudo gcc -c libapprox.c
-//# sudo ar crv libapprox.a libapprox.o
-// sudo libtool --mode=link  gcc -export-dynamic -o libapprox.a libapprox.o
+//# sudo gcc -c libapprox.c 
+//# sudo ar crv libapprox.a libapprox.o 
+// sudo libtool --mode=link gcc -export-dynamic -o libapprox.a libapprox.o
 
 // __wrap_malloc  //gcc -ggdb -o test test.c -Wl,-wrap,malloc
 
 #ifdef approx
+
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
+#define likely(expr) __builtin_expect(!!(expr), 1)
 
 #define __SSE__ 1
 #define __SSE2__ 1
@@ -22,6 +25,17 @@ typedef double double_t;
 //#define cos(x)*cos(x)-sin(x)*sin(x) dcos(x)
 //#define sin(acos(x)) sh1(x)
 //#define cos(asin(x)) sh1(x)
+#undef sin
+#undef cos
+#undef tan
+#undef sqrt
+#undef pow
+#undef sinh
+#undef atan2
+#undef atan
+#undef abs
+#undef asin
+
 
 #ifndef ncp
 #include <FastMemcpy_Avx.h>
@@ -47,15 +61,15 @@ typedef double double_t;
 #error "Upgrade your Systen please thx..."
 #endif
 
-#ifndef cos(x)
-#define cosa(x) cos(x)
-#endif
-#ifndef sin(x)
-#define sina(x) sin(x)
-#endif
-#ifndef tan(x)
-#define tana(a) tan(x)
-#endif
+//#ifndef cos(x)
+//#define cos(x) cosa(x)
+//#endif
+//#ifndef sin(x)
+//#define sin(x) sina(x)
+//#endif
+//#ifndef tan(x)
+//#define tan(a) tana(x)
+//#endif
 //#ifndef exp(x)
 //#define exp(x) expa(x)
 //#endif
@@ -111,7 +125,7 @@ typedef double double_t;
 //double cos(double x) __attribute__ ((alias("cosa")));
 //double sin(double x) __attribute__ ((alias("sina")));
 double log(double x) __attribute__ ((alias("loga")));
-//double tan(double x) __attribute__ ((alias("tana")));
+double tan(double x) __attribute__ ((alias("tana")));
 double exp(double x) __attribute__ ((alias("expa")));
 double ceil(double x) __attribute__ ((alias("ceila")));
 double floor(double x) __attribute__ ((alias("floora")));
@@ -153,8 +167,8 @@ float rsqrta(float ) __attribute__ ((hot)) __attribute__ ((__target__ ("default"
 //float sincosa(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 
 
-//#pragma GCC push_options
-//#pragma GCC optimize ("-march=core-avx-i -lm -DHAVE_ACML -L/opt/sse -L/opt/OpenBLAS/lib/ -L/usr/local/lib/ -lmingw32 -mf16c -latlas -lfftw3 -llapack -lblas -lOpenCL -lcufft_static -lcublas_static -lclblast -lacml_mv -lamac64o -fopenmp -I/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/include -L/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64 -lmkl_core -lmkl_tbb_thread -lmkl_intel_ilp64 -lstdc++ -lpthread -O1 -funroll-loops -flto -ftree-vectorize -funsafe-math-optimizations -mveclibabi=svml -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=1202 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+#pragma GCC push_options
+#pragma GCC optimize ("-march=core-avx-i -lm -DHAVE_ACML -L/opt/sse -L/opt/OpenBLAS/lib/ -L/usr/local/lib/ -lmingw32 -mf16c -latlas -lfftw3 -llapack -lblas -lOpenCL -lcufft_static -lcublas_static -lclblast -lacml_mv -lamac64o -fopenmp -I/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/include -L/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64 -lmkl_core -lmkl_tbb_thread -lmkl_intel_ilp64 -lstdc++ -lpthread -O1 -funroll-loops -flto -ftree-vectorize -funsafe-math-optimizations -mveclibabi=svml -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=1202 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
 static const double Zero[] = {0.0, -0.0,};
 #define packed_double(x) {(x), (x)}
@@ -201,23 +215,63 @@ double coef7[2] ALIGNED = packed_double(1.0/5040);
 double coef9[2] ALIGNED = packed_double(1.0/362880);
 
 // cache last sin(x)
-sincache[2] = { 0, 0 };
-coscache[2] = { 0, 0 };
-expcache[2] = { 0, 0 };
-logcache[2] = { 0, 0 };
-/*
-inline float f32tof16(float x)
+// n =  x , (n+1) = sin(x)
+unsigned short sincache[2] = { 0, 0 };
+unsigned short coscache[2] = { 0, 0 };
+unsigned short expcache[33] = { };
+unsigned short logcache[2] = { 0, 0 };
+
+inline unsigned short f32tof16(float x)
 {
     //float x;
     unsigned short f16;
     f16 = _cvtss_sh(x, 0);
     return f16;
 }
-*/
+
+inline float f16tof32(unsigned short x)
+{
+float f32;
+f32 = _cvtsh_ss(x);
+return f32;
+}
 
 inline double log2(double n)
 {
     return log(n) * M_LOG2E;
+}
+
+float reciprocal( float x )
+{
+    union {
+        float dbl;
+        unsigned uint;
+    } u;
+    u.dbl = x;
+    u.uint = ( 0xbe6eb3beU - u.uint ) >> (unsigned char)1;
+                                    // pow( x, -0.5 )
+    u.dbl *= u.dbl;                 // pow( pow(x,-0.5), 2 ) = pow( x, -1 ) = 1.0 / x
+    return u.dbl;
+}
+
+// nice precision
+float inv_fast(float x) {
+    union { float f; int i; } v;
+    float w, sx;
+    int m;
+
+    sx = (x < 0) ? -1:1;
+    x = sx * x;
+
+    v.i = (int)(0x7EF127EA - *(uint32_t *)&x);
+    w = x * v.f;
+
+    // Efficient Iterative Approximation Improvement in horner polynomial form.
+    v.f = v.f * (2 - w);     // Single iteration, Err = -3.36e-3 * 2^(-flr(log2(x)))
+    // v.f = v.f * ( 4 + w * (-6 + w * (4 - w)));  // Second iteration, Err = -1.13e-5 * 2^(-flr(log2(x)))
+    // v.f = v.f * (8 + w * (-28 + w * (56 + w * (-70 + w *(56 + w * (-28 + w * (8 - w)))))));  // Third Iteration, Err = +-6.8e-8 *  2^(-flr(log2(x)))
+
+    return v.f * sx;
 }
 
 float mmul(const float * a, const float * b, float * r)
@@ -473,9 +527,9 @@ void sin_sse(const double arg1, const double arg2, double* sin_x1, double* sin_x
 
 double sina(double x) 
 {
-	if(sincache[0]==x)
+	if(ceila(f16tof32(sincache[0]))==ceila(x))
 	{
-	return (sincache[1]);
+	return (f16tof32(sincache[1]));
 	}
   	if(x<0.3)
 	{
@@ -487,8 +541,8 @@ double sina(double x)
 	}
 	double result = -1.0;
 	sin_sse(x, x, &result, &result);
-	sincache[0]=x;
-	sincache[1]=result;
+	sincache[0]=f32tof16(x);
+	sincache[1]=f32tof16(result);
 	return result;
 }
 
@@ -568,12 +622,20 @@ inline double tanha(double x)
 	return -1.0f + 2.0f / (1.0f + expa (-2.0f * x));
 }
 
+// half float decrease values that the probability of repeating increase
+//
+
 inline double expa(double a)
-{
-        if(expcache[0]==a)
+{	
+	int q=0;
+	int cache=f16tof32(expcache[0]);
+	for(q=1;q<=32;q=q+2){
+	__builtin_prefetch(&expcache[q+2]);
+        if(likely(ceila(f16tof32(expcache[q]))==ceila(a)))
         {
-        return (expcache[1]);
+        return (f16tof32(expcache[q+1]));
         }
+	}
 	if(a<0.2)
 	{
 	return (1+a);
@@ -583,22 +645,18 @@ inline double expa(double a)
 	union { double d; int x[2]; } u;
 	u.x[1] = (int) (i[0] * a + i[1]);
 	u.x[0] = 0;
-	expcache[0]=a;
-	expcache[1]=u.d;
+	expcache[cache+1]=f32tof16(a);
+	expcache[cache+2]=f32tof16(u.d);
+	expcache[0]=f32tof16(cache+2);
+	//printf("%f",f16tof32(expcache[0]));
 	return u.d;
 }
 
 double loga(double a) 
 {
-	if(logcache[0]==a)
-	{
-	return logcache[1];
-	}
 	double y=0;
 	union { double d; long long x; } u = { a };
 	y = (u.x - 4607182418800017409) * 1.539095918623324e-16; /* 1 / 6497320848556798.0; */
-	logcache[0]=a;
-	logcache[1]=y;
 	return y;
 }
 
@@ -620,7 +678,7 @@ return powa(x, -0.5);
 // add sub & mul are inverse 
 float sqrta(float x)
 {
-return 1.0 / rsqrta(x);
+return inv_fast(rsqrta(x));
 }
 
 float atana(float inX)
@@ -699,14 +757,14 @@ return _mm_cvtss_f32(_mm_rcp_ss(_mm_set_ss(op)));
 double ssin(double x)
 {
 double b=0;
-b=(1-cosa(2*x))/2;
+b=(1-cos(2*x))/2;
 return (b);
 }
 
 double scos(double x)
 {
 double b=0;
-b=(1+cosa(2*x))/2;
+b=(1+cos(2*x))/2;
 return (b);
 }
 
@@ -717,7 +775,7 @@ return sina(2*x);
 
 double dcos(double x)
 {
-return cosa(2*x);
+return cos(2*x);
 }
 
 double sh1(double x)
@@ -860,7 +918,7 @@ double cbrt2(double x)
 //float expf(float x) __attribute__ ((alias("fm_expf"))); 
 //float exp10f(float x) __attribute__ ((alias("fm_exp10f")));
 
-//#pragma GCC pop_options
+#pragma GCC pop_options
 #endif
 
 
