@@ -58,6 +58,7 @@ __MATHCALL (atan,, (_Mdouble_ __x));
 /* Arc tangent of Y/X.  */
 __MATHCALL (atan2,, (_Mdouble_ __y, _Mdouble_ __x));
 
+#ifndef approx
 /* Cosine of X.  */
 __MATHCALL_VEC (cos,, (_Mdouble_ __x));
 /* Sine of X.  */
@@ -65,6 +66,7 @@ __MATHCALL_VEC (sin,, (_Mdouble_ __x));
 /* Tangent of X.  */
 __MATHCALL (tan,, (_Mdouble_ __x));
 
+#endif
 /* Hyperbolic functions.  */
 
 /* Hyperbolic cosine of X.  */
@@ -91,7 +93,7 @@ __MATHCALL (atanh,, (_Mdouble_ __x));
 #endif
 
 /* Exponential and logarithmic functions.  */
-
+#ifndef approx
 /* Exponential function of X.  */
 __MATHCALL_VEC (exp,, (_Mdouble_ __x));
 
@@ -110,6 +112,7 @@ __MATHCALL (log10,, (_Mdouble_ __x));
 /* Break VALUE into integral and fractional parts.  */
 __MATHCALL (modf,, (_Mdouble_ __x, _Mdouble_ *__iptr)) __nonnull ((2));
 
+#endif
 #if __GLIBC_USE (IEC_60559_FUNCS_EXT)
 /* Compute exponent to base ten.  */
 __MATHCALL (exp10,, (_Mdouble_ __x));
@@ -158,6 +161,7 @@ __MATHCALL (cbrt,, (_Mdouble_ __x));
 
 /* Nearest integer, absolute value, and remainder functions.  */
 
+#ifndef approx
 /* Smallest integral value not less than X.  */
 __MATHCALLX (ceil,, (_Mdouble_ __x), (__const__));
 
@@ -170,6 +174,7 @@ __MATHCALLX (floor,, (_Mdouble_ __x), (__const__));
 /* Floating-point modulo remainder of X/Y.  */
 __MATHCALL (fmod,, (_Mdouble_ __x, _Mdouble_ __y));
 
+#endif
 #ifdef __USE_MISC
 # if ((!defined __cplusplus \
        || __cplusplus < 201103L /* isinf conflicts with C++11.  */ \
