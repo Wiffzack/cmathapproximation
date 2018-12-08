@@ -10,6 +10,7 @@
 #define unlikely(expr) __builtin_expect(!!(expr), 0)
 #define likely(expr) __builtin_expect(!!(expr), 1)
 
+//#define ALIGNMENT 32 //Set to 16 bytes for SSE architectures and 32 bytes for AVX architectures
 #if __GNUC__
  #define ALIGN(x) x __attribute__((aligned(32)))
  #define SIMD_ALIGNED(var) var __attribute__((aligned(16)))
@@ -48,6 +49,16 @@ typedef double double_t;
 #include <stdint.h>
 #include <emmintrin.h>
 #include <xmmintrin.h>
+
+// for _mm_prefetch require xmmintrin.h
+/*enum _mm_hint
+{
+  _MM_HINT_T0 = 3,
+  _MM_HINT_T1 = 2,
+  _MM_HINT_T2 = 1,
+  _MM_HINT_NTA = 0
+};*/
+
 
 #define SFMT_N (19937 / 128 + 1)
 #define SFMT_SR1 11
@@ -122,7 +133,7 @@ typedef struct SFMT_T sfmt_t;
 #undef atan
 #undef abs
 #undef asin
-
+#undef log
 
 #ifndef ncp
 #include <sse_mathfun.h>
@@ -147,6 +158,7 @@ typedef struct SFMT_T sfmt_t;
 //#include <erfc.c>
 #if defined (__has_include) && (__has_include(<x86intrin.h>))
 #include <x86intrin.h>
+#include <libfaststring.h>
 #else
 #error "Upgrade your Systen please thx..."
 #endif
@@ -167,7 +179,7 @@ typedef struct SFMT_T sfmt_t;
 
 //double erfc(double x) __attribute__ ((alias("erfca")));
 double ceila(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
-float acosa(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
+double acosa(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 float asina(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 float sinha(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 double tanha(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
@@ -175,9 +187,9 @@ double loga(double)  __attribute__ ((hot)) __attribute__ ((__target__ ("default"
 float mina(float, float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 float maxa(float, float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 float rcpa(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
-//double sin(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
-//double cos(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
-//double tana(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
+static float sin1(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
+float cos(float) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
+double tan(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 double cota(double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 double expa (double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
 double powa (double,double) __attribute__ ((hot)) __attribute__ ((__target__ ("default")));
@@ -197,7 +209,9 @@ float rsqrta(float ) __attribute__ ((hot)) __attribute__ ((__target__ ("default"
 // Converting costs ( -mavx -mavx2 )
 #pragma GCC push_options
 //#pragma GCC optimize ("-march=core-avx-i -lm -DHAVE_ACML -L/opt/sse -L/opt/OpenBLAS/lib/ -L/usr/local/lib/ -lmingw32 -mf16c -latlas -lfftw3 -llapack -lblas -lOpenCL -lcufft_static -lcublas_static -lclblast -lacml_mv -lamac64o -fopenmp -I/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/include -L/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64 -lmkl_core -lmkl_tbb_thread -lmkl_intel_ilp64 -lstdc++ -lpthread -O1 -funroll-loops -flto -ftree-vectorize -funsafe-math-optimizations -mveclibabi=svml -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=1202 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
-#pragma GCC optimize ("-s -static -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mfma -funsafe-math-optimizations -DCLS=$(getconf LEVEL1_DCACHE_LINESIZE) -mpreferred-stack-boundary=3 -march=native -mtune=native -O1 -funroll-loops -ftree-vectorize -mveclibabi=svml -fprefetch-loop-arrays  -ftree-parallelize-loops=4 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb  -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps -maccumulate-outgoing-args -msseregparm -minline-all-stringops -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=2000 --param=max-sched-ready-insns=1000 --param=max-crossjump-edges=30 --param=max-delay-slot-insn-search=137 -fno-guess-branch-probability -fno-if-conversion -fno-ivopts -fno-schedule-insns -fsingle-precision-constant --param=max-unswitch-insns=5 --param=l1-cache-size=$((128*1/100)) --param=l2-cache-size=512")
+//-DCLS=$(getconf LEVEL1_DCACHE_LINESIZE) --param=l1-cache-size=$((128*1/100)) --param=l2-cache-size=512
+#pragma GCC optimize (" -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mfma -funsafe-math-optimizations -mpreferred-stack-boundary=3 -march=native -mtune=native -O1 -funroll-loops -ftree-vectorize -mveclibabi=svml -fprefetch-loop-arrays  -ftree-parallelize-loops=4 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb  -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps -maccumulate-outgoing-args -msseregparm -minline-all-stringops -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=2000 --param=max-sched-ready-insns=1000 --param=max-crossjump-edges=30 --param=max-delay-slot-insn-search=137 -fno-guess-branch-probability -fno-if-conversion -fno-ivopts -fno-schedule-insns -fsingle-precision-constant --param=max-unswitch-insns=5 -mpreferred-stack-boundary=3")
+
 
 static const double Zero[] = {0.0, -0.0,};
 #define packed_double(x) {(x), (x)}
@@ -254,13 +268,26 @@ double coef9[2] ALIGNED = packed_double(1.0/362880);
 #define HALF_MAX_CIRCLE_ANGLE (MAX_CIRCLE_ANGLE/2)
 #define QUARTER_MAX_CIRCLE_ANGLE (MAX_CIRCLE_ANGLE/4)
 #define MASK_MAX_CIRCLE_ANGLE (MAX_CIRCLE_ANGLE - 1)
-float fast_cossin_table[MAX_CIRCLE_ANGLE];
 
-unsigned short sincache[2] = { 0, 0 };
-unsigned short coscache[2] = { 0, 0 };
-float expcache[33] = { };
-unsigned short logcache[2] = { 0, 0 };
-unsigned short SinTable[256];
+//double *p;
+//p = (double*)malloc (sizeof(double)*(NUM_ELEMENTS+1));
+
+// SIMD parllel loop
+/*#pragma omp parallel
+{
+   #pragma omp for simd
+   for ...
+}*/
+
+
+#pragma pack(push,1)
+typedef struct triglist{
+        float fast_cossin_table[MAX_CIRCLE_ANGLE] __attribute__ ((aligned (16)));
+};
+#pragma pack(pop)
+struct triglist lib;
+//float fast_cossin_table[MAX_CIRCLE_ANGLE] __attribute__ ((aligned (16)));
+
 
 //#pragma GCC push_options
 //#pragma GCC optimize ("-s -static -funsafe-math-optimizations -DCLS=$(getconf LEVEL1_DCACHE_LINESIZE) -mpreferred-stack-boundary=3 -march=native -mtune=native -O1 -funroll-loops -ftree-vectorize -mveclibabi=svml -fprefetch-loop-arrays  -ftree-parallelize-loops=4 -mrtm -fipa-cp -ftree-loop-distribution -fprefetch-loop-arrays -freorder-blocks-and-partition -fif-conversion -ftree-loop-if-convert -freorder-blocks -ftree-loop-if-convert -ftree-vectorize -fweb  -ftree-loop-if-convert -fsplit-wide-types -ftree-slp-vectorize -ftree-dse -fgcse-las -fsched-dep-count-heuristic -fno-tree-slsr -fsched-spec-load -fconserve-stack -fstrict-aliasing -free -ftree-vrp -fthread-jumps -maccumulate-outgoing-args -msseregparm -minline-all-stringops -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc --param=max-reload-search-insns=356 --param=max-cselib-memory-locations=2000 --param=max-sched-ready-insns=1000 --param=max-crossjump-edges=30 --param=max-delay-slot-insn-search=137 -fno-guess-branch-probability -fno-if-conversion -fno-ivopts -fno-schedule-insns -fsingle-precision-constant --param=max-unswitch-insns=5 --param=l1-cache-size=$((128*1/100)) --param=l2-cache-size=512")
@@ -308,7 +335,7 @@ float inv_fast(float x) {
 
 float cos(float n)
 {
-   if(unlikely(fast_cossin_table[45]==0))
+   if(unlikely(lib.fast_cossin_table[45]==0))
    {
    InitSinTable();
    }
@@ -316,24 +343,19 @@ float cos(float n)
    float f = n * HALF_MAX_CIRCLE_ANGLE * I_PI;
    int i =  _mm_cvtt_ss2si(_mm_load_ss(&f));
    const int c=0x80000000;
-   __builtin_prefetch(&fast_cossin_table,1,1);
-   d = fast_cossin_table[(i + QUARTER_MAX_CIRCLE_ANGLE)&MASK_MAX_CIRCLE_ANGLE];
+   __builtin_prefetch(&lib.fast_cossin_table[0],1,1);
+   d = lib.fast_cossin_table[(i + QUARTER_MAX_CIRCLE_ANGLE)&MASK_MAX_CIRCLE_ANGLE];
    if (unlikely(i&c))
    {
-	return fast_cossin_table[((-i) + QUARTER_MAX_CIRCLE_ANGLE)&MASK_MAX_CIRCLE_ANGLE];
+	return lib.fast_cossin_table[((-i) + QUARTER_MAX_CIRCLE_ANGLE)&MASK_MAX_CIRCLE_ANGLE];
    }
    return d;
-}
-
-inline float sinwrapper(float n)
-{
-	return cos(n-M_PI_2);
 }
 
 
 static float sin1(float n)
 {
-   if(unlikely(fast_cossin_table[45]==0))
+   if(unlikely(lib.fast_cossin_table[45]==0))
    {
    InitSinTable();
    }
@@ -341,18 +363,16 @@ static float sin1(float n)
    float f = n * HALF_MAX_CIRCLE_ANGLE * I_PI;
    int i =  _mm_cvtt_ss2si(_mm_load_ss(&f));
    const int c=0x80000000;
-   __builtin_prefetch(&fast_cossin_table,1,1);
-   d = fast_cossin_table[i&MASK_MAX_CIRCLE_ANGLE];
+   __builtin_prefetch(&lib.fast_cossin_table[0],1,1);
+   d = lib.fast_cossin_table[i&MASK_MAX_CIRCLE_ANGLE];
    if (unlikely(i&c))
    {
-      return fast_cossin_table[(-((-i)&MASK_MAX_CIRCLE_ANGLE)) + MAX_CIRCLE_ANGLE];
+      return lib.fast_cossin_table[(-((-i)&MASK_MAX_CIRCLE_ANGLE)) + MAX_CIRCLE_ANGLE];
    }
    return d;
-
-
 }
-
 //#pragma GCC pop_options
+
 
 inline __m256 sftoavxa(float a[7])
 {
@@ -462,14 +482,14 @@ float f16tof32(unsigned short x)
 //  sin(x +π/2) = cos(x)
 //
 #undef sin(x)
-#pragma omp parallel
-#pragma omp for
 void InitSinTable()
 {
-	int i;
+	unsigned int i;
+	#pragma omp parallel
+	#pragma omp for
 	for (i = 0 ; i < MAX_CIRCLE_ANGLE ; i++)
 	{
-		fast_cossin_table[i] = (float)sin((double)i * M_PI / HALF_MAX_CIRCLE_ANGLE);
+		lib.fast_cossin_table[i] = (float)sin((double)i * M_PI / HALF_MAX_CIRCLE_ANGLE);
 	}
 }
 #define sin(x) sin1(x)
@@ -495,9 +515,9 @@ float reciprocal( float x )
 float mmul(const float * a, const float * b, float * r)
 {
 	__m128 a_line, b_line, r_line;
-	int i, j;
-	#pragma omp parallel
-	#pragma omp for
+	unsigned int i, j;
+	//#pragma omp parallel
+	//#pragma omp for
 	for (i=0; i<16; i+=4) {
     // unroll the first step of the loop to avoid having to initialize r_line to zero
 		a_line = _mm_load_ps(a);         // a_line = vec4(column(a, 0))
@@ -752,12 +772,6 @@ double sina(double x)
 	return result;
 }
 
-double cosaa(double x)
-{
-	return sina(x + M_PI_2);
-}
-
-
 double ceila(double x)
 {
         int i = convert(x);
@@ -781,17 +795,17 @@ int sum( int n, int *a )
 {
     __m128i sum = _mm_setzero_si128( );
     int val[4];
-    #pragma omp parallel
-    #pragma omp for
-    for ( int i = 0; i < n/4*4; i += 4 ) {
+    //#pragma omp parallel
+    //#pragma omp for
+    for ( unsigned int i = 0; i < n/4*4; i += 4 ) {
         __m128i vect = _mm_loadu_si128( (__m128i*) (a+i) );
         sum = _mm_add_epi32( vect, sum );
     }
     _mm_storeu_si128( (__m128i*) val, sum);
     int res = val[0] + val[1] + val[2] + val[3];
-    #pragma omp parallel
-    #pragma omp for
-    for( int i = n/4*4; i < n; i += 1 )
+    //#pragma omp parallel
+    //#pragma omp for
+    for( unsigned int i = n/4*4; i < n; i += 1 )
         res += a[i];
     return res;
 }
@@ -801,8 +815,10 @@ float rcpNewtonRaphsona(float inX, float inRcpX)
 	return inRcpX * (-inRcpX * inX + 2.0f);
 }
 
-float acosa(float x) {
-   return (-0.69813170079773212 * x * x - 0.87266462599716477) * x + 1.5707963267948966;
+double acosa(double x) {
+	const double y[] = {-0.69813170079773212,0.87266462599716477,1.5707963267948966};
+	//return (-0.69813170079773212 * x * x - 0.87266462599716477) * x + 1.5707963267948966;
+	return (y[0] * x * x -y[1]) * x + y[2];
 }
 
 inline float asina(float inX)
@@ -824,25 +840,22 @@ inline double tanha(double x)
 // half float decrease values that the probability of repeating increase
 //
 
-inline double expa(double a)
+double expa(double a)
 {	
 	if(a<0.2)
 	{
 	return (1+a);
 	}
-	const int i[2] = { 1512775,1072632447 };
-	__builtin_prefetch(&i,1,1);
 	union { double d; int x[2]; } u;
-	u.x[1] = convert((i[0] * a + i[1]));
+	u.x[1] = convert((1512775 * a + 1072632447));
 	u.x[0] = 0;
-	//printf("%f",f16tof32(expcache[0]));
 	return u.d;
 }
 
-double loga(double a) 
+double log(double a) 
 {
 	double y=0;
-	union { double d; long long x; } u = { a };
+	union { double d; unsigned long long x; } u = { a };
 	y = (u.x - 4607182418800017409) * 1.539095918623324e-16; /* 1 / 6497320848556798.0; */
 	return y;
 }
@@ -858,14 +871,14 @@ inline double powa(double a, double b)
 
 float rsqrta(float x)
 {
-return powa(x, -0.5);
+	return powa(x, -0.5);
 }
 
 // performance by div is probably higher by double
 // add sub & mul are inverse 
 float sqrta(float x)
 {
-return inv_fast(rsqrta(x));
+	return inv_fast(rsqrta(x));
 }
 
 float atana(float inX)
@@ -948,31 +961,31 @@ inline float FastClampInfinity( float x )
 
 double ssin(double x)
 {
-double b=0;
-b=(1-cos(2*x))/2;
-return (b);
+	double b=0;
+	b=(1-cos(2*x))/2;
+	return (b);
 }
 
 double scos(double x)
 {
-double b=0;
-b=(1+cos(2*x))/2;
-return (b);
+	double b=0;
+	b=(1+cos(2*x))/2;
+	return (b);
 }
 
 double dsin(double x)
 {
-return sina(2*x);
+	return sina(2*x);
 }
 
 double dcos(double x)
 {
-return cos(2*x);
+	return cos(2*x);
 }
 
 double sh1(double x)
 {
-return (sqrt(1-(x*x)));
+	return (sqrt(1-(x*x)));
 }
 
 // sin(0.3)=0.29552
@@ -1007,7 +1020,7 @@ inline double cosa(double x)
 double tan(double x)
 {
 	double input = x;
-	return (sin(x)*inv_fast(cos(x)));
+	return (sin(x)/(cos(x)));
 }
 
 double cota(double x)
@@ -1019,9 +1032,9 @@ double cota(double x)
 
 float absa(float x)
 {
-int casted = *(int*) &x;
-casted &= 0x7FFFFFFF;
-return *(float*)&casted;
+	int casted = *(int*) &x;
+	casted &= 0x7FFFFFFF;
+	return *(float*)&casted;
 }
 
 float Factorial(float value)
@@ -1034,14 +1047,16 @@ return sum;
 
 int Factorial2(int facno)
 {
-    int temno = 1;
-    #pragma omp parallel
-    #pragma omp for
-    for (int i = 1; i <= facno; i++)
-    {
-        temno = temno * i;
-    }
-    return temno;
+	int temno[2],cache = 1;
+	temno[1]=1;
+	#pragma omp parallel
+	#pragma omp for
+	for ( unsigned int i = 2; i <= facno; i++)
+	{
+        temno[0] = temno[1];
+	temno[1] = temno[0] * i;
+	}	
+	return temno[0];
 }
 
 float arisum(float value)
@@ -1110,9 +1125,8 @@ int VectorsEqual( const float *v1, const float *v2 )
 
 int VectorCompare (const float *v1, const float *v2)
 {
-	int i;
-	#pragma omp parallel
-	#pragma omp for
+	unsigned int i;
+	#pragma omp parallel for
 	for (i=0 ; i<3 ; i++){
 		if (v1[i] != v2[i]){
 			return 0;
@@ -1243,7 +1257,7 @@ inline void vec3_scale(float r, float v, float s) {
 //double cos(double x) __attribute__ ((alias("fastcos1")));
 //double sin(double x) __attribute__ ((alias("fastsin1")));
 //double fmod(double x) __attribute__ ((alias("fmoda")));
-double log(double x) __attribute__ ((alias("loga")));
+//double log(double x) __attribute__ ((alias("loga")));
 //double tan(double x) __attribute__ ((alias("tana")));
 double exp(double x) __attribute__ ((alias("expa")));
 double ceil(double x) __attribute__ ((alias("ceila")));
