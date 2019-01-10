@@ -1,3 +1,13 @@
+# Requirements 
+# https://github.com/skywind3000/FastMemcpy skywind3000 and his nice memcpy
+# Intel® MPI Library (libmpicxx.a and libmpifort.a)
+#
+# gcc -c -fPIC memcpy.c -o memcpy.o
+# gcc -shared memopt.o -o memopt.so -msse4 -lmpicxx -lmpifort
+# export LD_PRELOAD=memopt.so
+# pray...
+
+
 #ifndef fmemcpy
 #define fmemcpy
 #ifndef sseinclude
@@ -20,7 +30,6 @@ extern void *__I_MPI__intel_fast_memmove(void *str1, const void *str2, size_t n)
 
 void* memcpy(void *dst, const void *src, size_t size)
 {
-	//printf("easy test memcpy!\n");
 	if (size <= 128)
 	{
 		return memcpy_tiny(dst, src, size);
@@ -31,7 +40,7 @@ void* memcpy(void *dst, const void *src, size_t size)
 	}
 	if(size > 512 && size <= 1024)
 	{
-			return __I_MPI__intel_fast_memcpy(dst, src, size);
+		return __I_MPI__intel_fast_memcpy(dst, src, size);
 	}
 	if (size > 1024 && size <= 8192)
 	{
@@ -43,7 +52,7 @@ void* memcpy(void *dst, const void *src, size_t size)
 	}
 	if( size > 1048576 )
 	{
-		   return __I_MPI___intel_avx_rep_memcpy(dst, src, size);
+		return __I_MPI___intel_avx_rep_memcpy(dst, src, size);
 	}
 }
 
