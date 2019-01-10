@@ -7,6 +7,8 @@
 # export LD_PRELOAD=memopt.so
 # pray...
 
+# To be honest https://www.agner.org/optimize/ has a better memcpy routine for sizes between (1024 8192) 
+# im to stupid to creat a shared libary from his assembler code. :-(
 
 #ifndef fmemcpy
 #define fmemcpy
