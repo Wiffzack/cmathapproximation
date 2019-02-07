@@ -72,4 +72,57 @@ float sign(float op)
         __m128 s3 = _mm_and_ps(s, nz);
         return _mm_cvtss_f32(s3);
 }
+
+float sqrtf(float x)
+{
+	__m128 s = _mm_rcp_ss(_mm_rsqrt_ss(_mm_set_ss(x)));
+	float r; _mm_store_ss(&r, s); 
+	return r;
+}
+
+float isqrtf(float x) 
+{
+	__m128 s = _mm_rsqrt_ss(_mm_set_ss(x));
+	float r; _mm_store_ss(&r, s);
+	return r;
+}
+
+
+int sgn(double x) {
+	union { float f; int i; } u;
+	u.f=(float)x; return (u.i>>31)+((u.i-1)>>31)+1;
+}
+
+int isnonneg(double x) {
+	union { float f; unsigned int i; } u;
+	u.f=(float)x; return (int)(u.i>>31^1);
+}
+
+int iszero(double x) {
+	union { float f; int i; } u;
+	u.f=(float)x;
+	u.i&=0x7FFFFFFF;
+	return -((u.i>>31)^(u.i-1)>>31);
+}
+
+int getexp(float x) 
+{ 
+	return (int)(*((int*)&x+1)>>20&0x7FF)-1023;
+}
+
+float Q_rsqrt( float number )
+{
+	long i;
+	float x2, y;
+	const float threehalfs = 1.5F;
+	x2 = number * 0.5F;
+	y  = number;
+	i  = * ( long * ) &y;                       // evil floating point bit level hacking
+	i  = 0x5f3759df - ( i >> 1 );               // what the fuck? 
+	y  = * ( float * ) &i;
+	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+	return y;
+}
+
 #endif
